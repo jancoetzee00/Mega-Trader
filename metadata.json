@@ -1,0 +1,6 @@
+{
+  "name": "Gold & Crude Oil MT5 Trading Algorithm",
+  "description": "Institutional MetaTrader 5 (MQL5) algorithm, Gemini AI market watcher, encrypted MT5 WireGuard VPN tunnel bridge, and risk engine for Gold (XAUUSD) & Crude Oil (USOIL).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
