@@ -2,7 +2,26 @@ import React from 'react';
 import { AssetSymbol, StrategyPreset, TimeFrame } from '../types';
 import { ASSETS } from '../data/presets';
 import { MarketSentimentHeaderGauge } from './MarketSentimentHeaderGauge';
-import { Play, Download, Terminal, Settings, BookOpen, Layers, Zap, Activity, Cpu, Radio, Shield, Monitor, ShieldAlert } from 'lucide-react';
+import { User } from 'firebase/auth';
+import { 
+  Play, 
+  Download, 
+  Terminal, 
+  Settings, 
+  BookOpen, 
+  Layers, 
+  Zap, 
+  Activity, 
+  Cpu, 
+  Radio, 
+  Shield, 
+  Monitor, 
+  ShieldAlert,
+  Cloud,
+  Database,
+  User as UserIcon,
+  ShieldCheck
+} from 'lucide-react';
 
 interface NavbarProps {
   currentSymbol: AssetSymbol;
@@ -17,6 +36,8 @@ interface NavbarProps {
   onRunQuickSimulation: () => void;
   isAutoTrading?: boolean;
   onOpenSentimentModal: () => void;
+  currentUser?: User | null;
+  onOpenAuthModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -32,6 +53,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onRunQuickSimulation,
   isAutoTrading,
   onOpenSentimentModal,
+  currentUser,
+  onOpenAuthModal,
 }) => {
   const gold = ASSETS.XAUUSD;
   const oil = ASSETS.USOIL;
@@ -264,6 +287,34 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             ))}
           </div>
+
+          {/* Firebase Cloud Sync & Auth Button */}
+          <button
+            id="firebase-cloud-sync-btn"
+            onClick={onOpenAuthModal}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold border transition active:scale-95 cursor-pointer ${
+              currentUser
+                ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700 hover:border-slate-500'
+            }`}
+            title={currentUser ? `Signed in as ${currentUser.email}` : 'Sign in with Google to sync strategies to Firebase'}
+          >
+            {currentUser?.photoURL ? (
+              <img 
+                src={currentUser.photoURL} 
+                alt="Avatar" 
+                className="w-4 h-4 rounded-full border border-amber-400"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <Database className="h-3.5 w-3.5 text-amber-400" />
+            )}
+            <span className="hidden md:inline">
+              {currentUser ? currentUser.displayName?.split(' ')[0] || 'CLOUD' : 'CLOUD SYNC'}
+            </span>
+            <span className="md:hidden">CLOUD</span>
+            {currentUser && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>}
+          </button>
 
           {/* Quick Desktop Download Button */}
           <button

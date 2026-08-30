@@ -18,7 +18,10 @@ import { SecureVPNTunnelManager } from './components/SecureVPNTunnelManager';
 import { DesktopDownloadCenter } from './components/DesktopDownloadCenter';
 import { RiskDashboard } from './components/RiskDashboard';
 import { MarketSentimentModal } from './components/MarketSentimentModal';
-import { Activity, ShieldAlert, Sparkles, TrendingUp, Flame, Play, Download, Terminal, Radio, Cpu, Layers, BrainCircuit, ShieldCheck, Zap, Shield, Monitor, Globe } from 'lucide-react';
+import { FirebaseAuthModal } from './components/FirebaseAuthModal';
+import { auth, saveBacktestToCloud } from './firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { Activity, ShieldAlert, Sparkles, TrendingUp, Flame, Play, Download, Terminal, Radio, Cpu, Layers, BrainCircuit, ShieldCheck, Zap, Shield, Monitor, Globe, Database, Cloud } from 'lucide-react';
 
 export default function App() {
   const [currentSymbol, setCurrentSymbol] = useState<AssetSymbol>('XAUUSD');
@@ -29,6 +32,16 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'ai-watcher' | 'backtest' | 'risk' | 'simulation' | 'code' | 'guide' | 'vpn' | 'desktop'>('ai-watcher');
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [isSentimentModalOpen, setIsSentimentModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  // Subscribe to Firebase Auth state
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Simulation state
   const [activeCandleIndex, setActiveCandleIndex] = useState<number>(75);
@@ -288,6 +301,8 @@ export default function App() {
         }}
         isAutoTrading={isAutoTrading}
         onOpenSentimentModal={() => setIsSentimentModalOpen(true)}
+        currentUser={currentUser}
+        onOpenAuthModal={() => setIsAuthModalOpen(true)}
       />
 
       {/* Main Content Body */}
@@ -413,6 +428,12 @@ export default function App() {
             <PerformanceDashboard
               results={results}
               config={config}
+              isLoggedIn={!!currentUser}
+              onSaveToCloud={async () => {
+                if (currentUser) {
+                  await saveBacktestToCloud(currentUser.uid, results, config);
+                }
+              }}
             />
 
             {/* D3-Powered Risk Dashboard: Sharpe, Sortino, Underwater Drawdown & VaR */}
@@ -535,6 +556,20 @@ export default function App() {
         onClose={() => setIsSentimentModalOpen(false)}
         currentSymbol={currentSymbol}
         onSelectSymbol={handleSelectSymbol}
+      />
+
+      {/* Firebase Cloud Sync & Authentication Modal */}
+      <FirebaseAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        currentUser={currentUser}
+        currentConfig={config}
+        currentBacktestResults={results}
+        onLoadStrategy={(loadedStrat) => {
+          setConfig(loadedStrat);
+          setCurrentSymbol(loadedStrat.symbol);
+          setTimeframe(loadedStrat.timeframe);
+        }}
       />
     </div>
   );

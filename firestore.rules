@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default Deny All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 1. User Profile Validation
+    function isValidUserProfile(data, userId) {
+      return data.userId == userId &&
+        data.userId is string && data.userId.size() <= 128 &&
+        data.email is string && data.email.size() <= 256 &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128)) &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 512)) &&
+        (!('defaultSymbol' in data) || (data.defaultSymbol in ['XAUUSD', 'USOIL'])) &&
+        (!('activeVpnNode' in data) || (data.activeVpnNode is string && data.activeVpnNode.size() <= 64));
+    }
+
+    // 2. Custom Strategy Validation
+    function isValidCustomStrategy(data, userId) {
+      return data.userId == userId &&
+        data.id is string && isValidId(data.id) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 64 &&
+        data.symbol in ['XAUUSD', 'USOIL'] &&
+        data.timeframe is string && data.timeframe.size() <= 16 &&
+        data.fastEmaPeriod is number && data.fastEmaPeriod > 0 &&
+        data.slowEmaPeriod is number && data.slowEmaPeriod > 0 &&
+        data.riskPercent is number && data.riskPercent > 0;
+    }
+
+    // 3. Saved Backtest Validation
+    function isValidSavedBacktest(data, userId) {
+      return data.userId == userId &&
+        data.id is string && isValidId(data.id) &&
+        data.strategyName is string && data.strategyName.size() <= 64 &&
+        data.symbol in ['XAUUSD', 'USOIL'] &&
+        data.timeframe is string && data.timeframe.size() <= 16 &&
+        data.netProfit is number &&
+        data.winRate is number;
+    }
+
+    // 4. Trade Journal Entry Validation
+    function isValidTradeJournalEntry(data, userId) {
+      return data.userId == userId &&
+        data.id is string && isValidId(data.id) &&
+        data.symbol is string && data.symbol.size() <= 16 &&
+        data.action in ['BUY', 'SELL'] &&
+        data.entryPrice is number &&
+        data.status in ['OPEN', 'CLOSED', 'CANCELLED'] &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 1024));
+    }
+
+    // User collection and subcollections
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserProfile(incoming(), userId);
+      allow update: if isOwner(userId) && isValidUserProfile(incoming(), userId) && incoming().userId == existing().userId;
+      allow delete: if isOwner(userId);
+
+      // Strategies subcollection
+      match /strategies/{strategyId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(strategyId) && isValidCustomStrategy(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(strategyId) && isValidCustomStrategy(incoming(), userId) && incoming().id == existing().id && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(strategyId);
+      }
+
+      // Backtests subcollection
+      match /backtests/{backtestId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(backtestId) && isValidSavedBacktest(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(backtestId) && isValidSavedBacktest(incoming(), userId) && incoming().id == existing().id && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(backtestId);
+      }
+
+      // Journal subcollection
+      match /journal/{entryId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(entryId) && isValidTradeJournalEntry(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(entryId) && isValidTradeJournalEntry(incoming(), userId) && incoming().id == existing().id && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(entryId);
+      }
+    }
+  }
+}

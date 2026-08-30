@@ -1,0 +1,106 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User trading profile, workspace settings, and preferences",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "photoURL": { "type": "string", "maxLength": 512 },
+        "defaultSymbol": { "type": "string", "enum": ["XAUUSD", "USOIL"], "maxLength": 16 },
+        "activeVpnNode": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email"]
+    },
+    "CustomStrategy": {
+      "title": "CustomStrategy",
+      "description": "User saved algorithmic strategy parameters and risk rules",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 64 },
+        "symbol": { "type": "string", "enum": ["XAUUSD", "USOIL"], "maxLength": 16 },
+        "timeframe": { "type": "string", "maxLength": 16 },
+        "fastEmaPeriod": { "type": "number" },
+        "slowEmaPeriod": { "type": "number" },
+        "supertrendPeriod": { "type": "number" },
+        "supertrendMultiplier": { "type": "number" },
+        "atrPeriod": { "type": "number" },
+        "riskPercent": { "type": "number" },
+        "maxDailyLossPercent": { "type": "number" },
+        "stopLossAtrMultiple": { "type": "number" },
+        "takeProfitAtrMultiple": { "type": "number" },
+        "partialTpAtrMultiple": { "type": "number" },
+        "breakEvenAtrMultiple": { "type": "number" },
+        "trailingStopAtrMultiple": { "type": "number" },
+        "useAiFilters": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "symbol", "timeframe"]
+    },
+    "SavedBacktest": {
+      "title": "SavedBacktest",
+      "description": "Historical backtest simulation performance record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "strategyName": { "type": "string", "maxLength": 64 },
+        "symbol": { "type": "string", "enum": ["XAUUSD", "USOIL"], "maxLength": 16 },
+        "timeframe": { "type": "string", "maxLength": 16 },
+        "netProfit": { "type": "number" },
+        "profitFactor": { "type": "number" },
+        "winRate": { "type": "number" },
+        "sharpeRatio": { "type": "number" },
+        "sortinoRatio": { "type": "number" },
+        "maxDrawdown": { "type": "number" },
+        "totalTrades": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "strategyName", "symbol", "timeframe", "netProfit", "winRate"]
+    },
+    "TradeJournalEntry": {
+      "title": "TradeJournalEntry",
+      "description": "User trade journal entry and notes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "symbol": { "type": "string", "maxLength": 16 },
+        "action": { "type": "string", "enum": ["BUY", "SELL"], "maxLength": 8 },
+        "entryPrice": { "type": "number" },
+        "exitPrice": { "type": "number" },
+        "pnl": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 1024 },
+        "status": { "type": "string", "enum": ["OPEN", "CLOSED", "CANCELLED"], "maxLength": 16 },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "symbol", "action", "entryPrice", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile and synchronization settings"
+    },
+    "/users/{userId}/strategies/{strategyId}": {
+      "schema": "CustomStrategy",
+      "description": "User custom saved trading strategies"
+    },
+    "/users/{userId}/backtests/{backtestId}": {
+      "schema": "SavedBacktest",
+      "description": "Historical backtest runs and performance telemetry"
+    },
+    "/users/{userId}/journal/{entryId}": {
+      "schema": "TradeJournalEntry",
+      "description": "User execution journal logs and notes"
+    }
+  }
+}

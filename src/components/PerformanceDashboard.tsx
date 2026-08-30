@@ -1,15 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BacktestResults, StrategyConfig } from '../types';
-import { TrendingUp, ShieldCheck, Target, Percent, DollarSign, Activity, Award, BarChart3, AlertTriangle } from 'lucide-react';
+import { TrendingUp, ShieldCheck, Target, Percent, DollarSign, Activity, Award, BarChart3, AlertTriangle, Cloud, Check } from 'lucide-react';
 
 interface PerformanceDashboardProps {
   results: BacktestResults;
   config: StrategyConfig;
+  onSaveToCloud?: () => Promise<void>;
+  isLoggedIn?: boolean;
 }
 
-export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ results, config }) => {
+export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ 
+  results, 
+  config,
+  onSaveToCloud,
+  isLoggedIn
+}) => {
+  const [isSaving, setIsSaving] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
   const isProfit = results.netProfit >= 0;
   const returnPct = ((results.netProfit / results.initialBalance) * 100).toFixed(1);
+
+  const handleCloudSave = async () => {
+    if (!onSaveToCloud) return;
+    setIsSaving(true);
+    try {
+      await onSaveToCloud();
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Generate SVG points for the equity curve
   const equityPoints = results.equityCurve;
@@ -187,6 +210,31 @@ export const PerformanceDashboard: React.FC<PerformanceDashboardProps> = ({ resu
             </div>
 
             <div className="flex items-center gap-3 text-xs font-mono">
+              {onSaveToCloud && isLoggedIn && (
+                <button
+                  onClick={handleCloudSave}
+                  disabled={isSaving || savedSuccess}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-mono font-bold transition border cursor-pointer ${
+                    savedSuccess
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      : 'bg-slate-900 hover:bg-amber-500/20 text-amber-300 border-slate-700 hover:border-amber-500/40'
+                  }`}
+                  title="Archive this backtest performance run to Firestore Cloud"
+                >
+                  {savedSuccess ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      <span>Archived</span>
+                    </>
+                  ) : (
+                    <>
+                      <Cloud className="w-3 h-3 text-amber-400" />
+                      <span>{isSaving ? 'Saving...' : 'Archive Run'}</span>
+                    </>
+                  )}
+                </button>
+              )}
+
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_5px_rgba(16,185,129,0.8)]"></span>
                 <span className="text-slate-300">Equity</span>
