@@ -73,12 +73,64 @@ service cloud.firestore {
         (!('notes' in data) || (data.notes is string && data.notes.size() <= 1024));
     }
 
+    // 5. User Wallet Validation
+    function isValidUserWallet(data, userId) {
+      return data.userId == userId &&
+        data.vaultBalance is number && data.vaultBalance >= 0 &&
+        data.mt5Balance is number && data.mt5Balance >= 0 &&
+        (!('pendingWithdrawal' in data) || (data.pendingWithdrawal is number && data.pendingWithdrawal >= 0)) &&
+        (!('currency' in data) || (data.currency is string && data.currency.size() <= 8));
+    }
+
+    // 6. MT5 Account Connection Validation
+    function isValidMT5Connection(data, userId) {
+      return data.userId == userId &&
+        data.accountNumber is string && data.accountNumber.size() > 0 && data.accountNumber.size() <= 32 &&
+        data.brokerServer is string && data.brokerServer.size() > 0 && data.brokerServer.size() <= 128 &&
+        data.accountType in ['DEMO', 'LIVE', 'PROP_FIRM'] &&
+        (!('leverage' in data) || (data.leverage is number && data.leverage > 0)) &&
+        (!('isConnected' in data) || data.isConnected is bool);
+    }
+
+    // 7. Wallet Transaction Validation
+    function isValidWalletTransaction(data, userId) {
+      return data.userId == userId &&
+        data.id is string && isValidId(data.id) &&
+        data.type in ['DEPOSIT', 'WITHDRAWAL', 'TRANSFER_TO_MT5', 'TRANSFER_FROM_MT5', 'PROFIT_SWEEP'] &&
+        data.amount is number && data.amount > 0 &&
+        data.status in ['COMPLETED', 'PROCESSING', 'PENDING_PIN', 'CANCELLED'] &&
+        data.method is string && data.method.size() <= 64 &&
+        (!('destination' in data) || (data.destination is string && data.destination.size() <= 256));
+    }
+
     // User collection and subcollections
     match /users/{userId} {
       allow get: if isOwner(userId);
       allow create: if isOwner(userId) && isValidUserProfile(incoming(), userId);
       allow update: if isOwner(userId) && isValidUserProfile(incoming(), userId) && incoming().userId == existing().userId;
       allow delete: if isOwner(userId);
+
+      // Main Wallet document
+      match /wallet/{walletId} {
+        allow get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidUserWallet(incoming(), userId);
+        allow delete: if isOwner(userId);
+      }
+
+      // MT5 Connection document
+      match /mt5/{connectionId} {
+        allow get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidMT5Connection(incoming(), userId);
+        allow delete: if isOwner(userId);
+      }
+
+      // Transactions subcollection
+      match /transactions/{txId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(txId) && isValidWalletTransaction(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(txId) && isValidWalletTransaction(incoming(), userId) && incoming().id == existing().id && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(txId);
+      }
 
       // Strategies subcollection
       match /strategies/{strategyId} {

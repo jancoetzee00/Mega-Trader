@@ -20,7 +20,8 @@ import {
   Cloud,
   Database,
   User as UserIcon,
-  ShieldCheck
+  ShieldCheck,
+  Wallet
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -30,14 +31,17 @@ interface NavbarProps {
   onSelectPreset: (preset: StrategyPreset) => void;
   timeframe: TimeFrame;
   onSelectTimeframe: (tf: TimeFrame) => void;
-  activeTab: 'ai-watcher' | 'backtest' | 'risk' | 'code' | 'simulation' | 'guide' | 'vpn' | 'desktop';
-  setActiveTab: (tab: 'ai-watcher' | 'backtest' | 'risk' | 'code' | 'simulation' | 'guide' | 'vpn' | 'desktop') => void;
+  activeTab: 'ai-watcher' | 'backtest' | 'risk' | 'wallet' | 'code' | 'simulation' | 'guide' | 'vpn' | 'desktop';
+  setActiveTab: (tab: 'ai-watcher' | 'backtest' | 'risk' | 'wallet' | 'code' | 'simulation' | 'guide' | 'vpn' | 'desktop') => void;
   onOpenCodeModal: () => void;
   onRunQuickSimulation: () => void;
   isAutoTrading?: boolean;
   onOpenSentimentModal: () => void;
   currentUser?: User | null;
   onOpenAuthModal: () => void;
+  vaultBalance?: number;
+  mt5AccountNumber?: string;
+  mt5IsConnected?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -55,6 +59,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenSentimentModal,
   currentUser,
   onOpenAuthModal,
+  vaultBalance = 6250.00,
+  mt5AccountNumber = '50928412',
+  mt5IsConnected = true,
 }) => {
   const gold = ASSETS.XAUUSD;
   const oil = ASSETS.USOIL;
@@ -202,6 +209,22 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           <button
+            id="tab-wallet-btn"
+            onClick={() => setActiveTab('wallet')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition whitespace-nowrap border ${
+              activeTab === 'wallet'
+                ? 'bg-amber-500 text-slate-950 font-bold border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                : 'text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30'
+            }`}
+          >
+            <Wallet className="h-3.5 w-3.5 text-emerald-400" />
+            <span>Wallet & MT5 Terminal</span>
+            {mt5IsConnected && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            )}
+          </button>
+
+          <button
             id="tab-simulation-btn"
             onClick={() => setActiveTab('simulation')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition whitespace-nowrap ${
@@ -287,6 +310,25 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             ))}
           </div>
+
+          {/* Quick Wallet & Funds Pill */}
+          <button
+            id="quick-wallet-pill-btn"
+            onClick={() => setActiveTab('wallet')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold border transition active:scale-95 cursor-pointer ${
+              activeTab === 'wallet'
+                ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+            }`}
+            title="Open Master Vault & MT5 Terminal"
+          >
+            <Wallet className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="text-white font-bold">${vaultBalance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+            <span className="hidden xl:inline text-[10px] text-slate-400 font-normal">VAULT</span>
+            {mt5IsConnected && (
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5"></span>
+            )}
+          </button>
 
           {/* Firebase Cloud Sync & Auth Button */}
           <button

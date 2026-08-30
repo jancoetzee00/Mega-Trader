@@ -20,7 +20,15 @@ import {
   Unsubscribe 
 } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
-import { StrategyConfig, BacktestResults, AssetSymbol, TimeFrame } from './types';
+import { 
+  StrategyConfig, 
+  BacktestResults, 
+  AssetSymbol, 
+  TimeFrame,
+  UserWalletData,
+  MT5AccountProfile,
+  WalletTransactionRecord
+} from './types';
 
 // Initialize Firebase App & Services
 const app = initializeApp(firebaseConfig);
@@ -269,3 +277,142 @@ export function subscribeToUserBacktests(
     }
   );
 }
+
+// User Vault Wallet Persistence
+export async function saveUserWalletToCloud(userId: string, wallet: UserWalletData): Promise<void> {
+  const path = `users/${userId}/wallet/main`;
+  try {
+    await setDoc(doc(db, 'users', userId, 'wallet', 'main'), {
+      userId,
+      vaultBalance: Number(wallet.vaultBalance.toFixed(2)),
+      mt5Balance: Number(wallet.mt5Balance.toFixed(2)),
+      pendingWithdrawal: Number(wallet.pendingWithdrawal.toFixed(2)),
+      currency: wallet.currency || 'USD',
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export function subscribeUserWallet(
+  userId: string,
+  onUpdate: (wallet: UserWalletData | null) => void
+): Unsubscribe {
+  const path = `users/${userId}/wallet/main`;
+  return onSnapshot(
+    doc(db, 'users', userId, 'wallet', 'main'),
+    (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        onUpdate({
+          vaultBalance: Number(data.vaultBalance || 0),
+          mt5Balance: Number(data.mt5Balance || 0),
+          pendingWithdrawal: Number(data.pendingWithdrawal || 0),
+          currency: data.currency || 'USD',
+          lastUpdated: data.updatedAt || new Date().toISOString()
+        });
+      } else {
+        onUpdate(null);
+      }
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  );
+}
+
+// MT5 Connection Persistence
+export async function saveMT5ConnectionToCloud(userId: string, mt5: MT5AccountProfile): Promise<void> {
+  const path = `users/${userId}/mt5/connection`;
+  try {
+    await setDoc(doc(db, 'users', userId, 'mt5', 'connection'), {
+      userId,
+      accountNumber: mt5.accountNumber,
+      brokerServer: mt5.brokerServer,
+      accountType: mt5.accountType,
+      leverage: mt5.leverage,
+      currency: mt5.currency || 'USD',
+      isConnected: mt5.status === 'CONNECTED',
+      lastConnected: new Date().toISOString(),
+      autoTradingEnabled: mt5.autoTradingEnabled
+    }, { merge: true });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export function subscribeMT5Connection(
+  userId: string,
+  onUpdate: (data: any | null) => void
+): Unsubscribe {
+  const path = `users/${userId}/mt5/connection`;
+  return onSnapshot(
+    doc(db, 'users', userId, 'mt5', 'connection'),
+    (docSnap) => {
+      if (docSnap.exists()) {
+        onUpdate(docSnap.data());
+      } else {
+        onUpdate(null);
+      }
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  );
+}
+
+// Wallet Transactions Persistence
+export async function recordWalletTransactionToCloud(userId: string, tx: WalletTransactionRecord): Promise<void> {
+  const path = `users/${userId}/transactions/${tx.id}`;
+  try {
+    await setDoc(doc(db, 'users', userId, 'transactions', tx.id), {
+      id: tx.id,
+      userId,
+      type: tx.type,
+      amount: Number(tx.amount.toFixed(2)),
+      currency: tx.currency || 'USD',
+      status: tx.status,
+      method: tx.method,
+      destination: tx.destination,
+      referenceId: tx.referenceId,
+      createdAt: tx.createdAt || new Date().toISOString()
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+export function subscribeWalletTransactions(
+  userId: string,
+  onUpdate: (txs: WalletTransactionRecord[]) => void
+): Unsubscribe {
+  const path = `users/${userId}/transactions`;
+  return onSnapshot(
+    collection(db, 'users', userId, 'transactions'),
+    (snapshot) => {
+      const items: WalletTransactionRecord[] = [];
+      snapshot.forEach(docSnap => {
+        const d = docSnap.data();
+        items.push({
+          id: d.id,
+          type: d.type,
+          amount: Number(d.amount),
+          fee: 0,
+          currency: d.currency || 'USD',
+          status: d.status,
+          method: d.method,
+          destination: d.destination || '',
+          referenceId: d.referenceId,
+          createdAt: d.createdAt
+        });
+      });
+      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      onUpdate(items);
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  );
+}
+

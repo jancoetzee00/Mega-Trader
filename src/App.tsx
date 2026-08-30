@@ -19,9 +19,10 @@ import { DesktopDownloadCenter } from './components/DesktopDownloadCenter';
 import { RiskDashboard } from './components/RiskDashboard';
 import { MarketSentimentModal } from './components/MarketSentimentModal';
 import { FirebaseAuthModal } from './components/FirebaseAuthModal';
+import { WalletAndMT5Terminal } from './components/WalletAndMT5Terminal';
 import { auth, saveBacktestToCloud } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { Activity, ShieldAlert, Sparkles, TrendingUp, Flame, Play, Download, Terminal, Radio, Cpu, Layers, BrainCircuit, ShieldCheck, Zap, Shield, Monitor, Globe, Database, Cloud } from 'lucide-react';
+import { Activity, ShieldAlert, Sparkles, TrendingUp, Flame, Play, Download, Terminal, Radio, Cpu, Layers, BrainCircuit, ShieldCheck, Zap, Shield, Monitor, Globe, Database, Cloud, Wallet } from 'lucide-react';
 
 export default function App() {
   const [currentSymbol, setCurrentSymbol] = useState<AssetSymbol>('XAUUSD');
@@ -29,7 +30,7 @@ export default function App() {
   const [timeframe, setTimeframe] = useState<TimeFrame>('M15');
   const [config, setConfig] = useState<StrategyConfig>(DEFAULT_CONFIGS.AuraBreak_Gold);
   
-  const [activeTab, setActiveTab] = useState<'ai-watcher' | 'backtest' | 'risk' | 'simulation' | 'code' | 'guide' | 'vpn' | 'desktop'>('ai-watcher');
+  const [activeTab, setActiveTab] = useState<'ai-watcher' | 'backtest' | 'risk' | 'wallet' | 'simulation' | 'code' | 'guide' | 'vpn' | 'desktop'>('ai-watcher');
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [isSentimentModalOpen, setIsSentimentModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -477,6 +478,14 @@ export default function App() {
               currentPreset={currentPreset}
             />
           </div>
+        )}
+
+        {/* Tab: Master Wallet & MT5 Terminal (Add Funds, Withdraw, Login to MT5) */}
+        {activeTab === 'wallet' && (
+          <WalletAndMT5Terminal
+            currentUser={currentUser}
+            onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          />
         )}
 
         {/* Tab 2: Live Tick Simulation */}

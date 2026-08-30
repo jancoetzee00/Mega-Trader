@@ -83,12 +83,73 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "userId", "symbol", "action", "entryPrice", "status"]
+    },
+    "UserWallet": {
+      "title": "UserWallet",
+      "description": "User master vault balance, MT5 account balance, and withdrawal escrow",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "vaultBalance": { "type": "number" },
+        "mt5Balance": { "type": "number" },
+        "pendingWithdrawal": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "vaultBalance", "mt5Balance"]
+    },
+    "MT5AccountConnection": {
+      "title": "MT5AccountConnection",
+      "description": "MT5 terminal login credentials, broker cluster, and connection status",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "accountNumber": { "type": "string", "maxLength": 32 },
+        "brokerServer": { "type": "string", "maxLength": 128 },
+        "accountType": { "type": "string", "enum": ["DEMO", "LIVE", "PROP_FIRM"], "maxLength": 16 },
+        "leverage": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "isConnected": { "type": "boolean" },
+        "lastConnected": { "type": "string", "format": "date-time" },
+        "autoTradingEnabled": { "type": "boolean" }
+      },
+      "required": ["userId", "accountNumber", "brokerServer", "accountType"]
+    },
+    "WalletTransaction": {
+      "title": "WalletTransaction",
+      "description": "Record of deposit, withdrawal, or vault to MT5 transfer",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["DEPOSIT", "WITHDRAWAL", "TRANSFER_TO_MT5", "TRANSFER_FROM_MT5", "PROFIT_SWEEP"], "maxLength": 32 },
+        "amount": { "type": "number" },
+        "currency": { "type": "string", "maxLength": 8 },
+        "status": { "type": "string", "enum": ["COMPLETED", "PROCESSING", "PENDING_PIN", "CANCELLED"], "maxLength": 16 },
+        "method": { "type": "string", "maxLength": 64 },
+        "destination": { "type": "string", "maxLength": 256 },
+        "referenceId": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "type", "amount", "status", "method"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "User profile and synchronization settings"
+    },
+    "/users/{userId}/wallet/main": {
+      "schema": "UserWallet",
+      "description": "User master vault wallet and balance telemetry"
+    },
+    "/users/{userId}/mt5/connection": {
+      "schema": "MT5AccountConnection",
+      "description": "MT5 terminal login credentials and status"
+    },
+    "/users/{userId}/transactions/{txId}": {
+      "schema": "WalletTransaction",
+      "description": "User deposit, withdrawal, and transfer transaction ledger"
     },
     "/users/{userId}/strategies/{strategyId}": {
       "schema": "CustomStrategy",

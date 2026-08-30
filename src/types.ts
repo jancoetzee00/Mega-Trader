@@ -290,3 +290,51 @@ export interface MarketSentimentData {
   lastUpdated: string;
 }
 
+export type WalletTxType = 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER_TO_MT5' | 'TRANSFER_FROM_MT5' | 'PROFIT_SWEEP';
+export type WalletTxStatus = 'COMPLETED' | 'PROCESSING' | 'PENDING_PIN' | 'CANCELLED';
+
+export interface WalletTransactionRecord {
+  id: string;
+  type: WalletTxType;
+  amount: number;
+  fee: number;
+  currency: string;
+  status: WalletTxStatus;
+  method: string;
+  destination: string;
+  referenceId: string;
+  createdAt: string;
+  completedAt?: string;
+  note?: string;
+}
+
+export interface UserWalletData {
+  vaultBalance: number;       // Master Safe Vault (stored funds safe from trading risk, ready for withdrawal)
+  mt5Balance: number;         // Allocated active margin in MT5 live account
+  pendingWithdrawal: number;  // Current escrow amount undergoing withdrawal processing
+  currency: string;           // USD
+  lastUpdated: string;
+}
+
+export type MT5AccountType = 'DEMO' | 'LIVE' | 'PROP_FIRM';
+export type MT5ConnectionStatus = 'CONNECTED' | 'DISCONNECTED' | 'AUTHENTICATING' | 'ERROR';
+
+export interface MT5AccountProfile {
+  accountNumber: string;
+  brokerServer: string;
+  brokerName: string;
+  accountType: MT5AccountType;
+  password?: string;
+  investorPassword?: string;
+  leverage: number;
+  currency: string;
+  status: MT5ConnectionStatus;
+  equity: number;
+  freeMargin: number;
+  marginLevelPercent: number;
+  serverPingMs: number;
+  autoTradingEnabled: boolean;
+  connectedSince?: string;
+  errorMessage?: string;
+}
+
