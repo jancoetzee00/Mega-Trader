@@ -16,7 +16,9 @@ import { CodeViewerModal } from './components/CodeViewerModal';
 import { AIMarketWatcher } from './components/AIMarketWatcher';
 import { SecureVPNTunnelManager } from './components/SecureVPNTunnelManager';
 import { DesktopDownloadCenter } from './components/DesktopDownloadCenter';
-import { Activity, ShieldAlert, Sparkles, TrendingUp, Flame, Play, Download, Terminal, Radio, Cpu, Layers, BrainCircuit, ShieldCheck, Zap, Shield, Monitor } from 'lucide-react';
+import { RiskDashboard } from './components/RiskDashboard';
+import { MarketSentimentModal } from './components/MarketSentimentModal';
+import { Activity, ShieldAlert, Sparkles, TrendingUp, Flame, Play, Download, Terminal, Radio, Cpu, Layers, BrainCircuit, ShieldCheck, Zap, Shield, Monitor, Globe } from 'lucide-react';
 
 export default function App() {
   const [currentSymbol, setCurrentSymbol] = useState<AssetSymbol>('XAUUSD');
@@ -24,8 +26,9 @@ export default function App() {
   const [timeframe, setTimeframe] = useState<TimeFrame>('M15');
   const [config, setConfig] = useState<StrategyConfig>(DEFAULT_CONFIGS.AuraBreak_Gold);
   
-  const [activeTab, setActiveTab] = useState<'ai-watcher' | 'backtest' | 'simulation' | 'code' | 'guide' | 'vpn' | 'desktop'>('ai-watcher');
+  const [activeTab, setActiveTab] = useState<'ai-watcher' | 'backtest' | 'risk' | 'simulation' | 'code' | 'guide' | 'vpn' | 'desktop'>('ai-watcher');
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [isSentimentModalOpen, setIsSentimentModalOpen] = useState(false);
 
   // Simulation state
   const [activeCandleIndex, setActiveCandleIndex] = useState<number>(75);
@@ -284,6 +287,7 @@ export default function App() {
           setIsPlaying(true);
         }}
         isAutoTrading={isAutoTrading}
+        onOpenSentimentModal={() => setIsSentimentModalOpen(true)}
       />
 
       {/* Main Content Body */}
@@ -321,7 +325,26 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* News Sentiment Impact Pill */}
+            <button
+              id="banner-news-sentiment-btn"
+              onClick={() => setIsSentimentModalOpen(true)}
+              className="text-left font-mono bg-slate-950/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 cursor-pointer group"
+              title="Click to inspect Global News Sentiment Impact"
+            >
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+              <div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                  <Globe className="w-2.5 h-2.5 text-amber-400" />
+                  <span>NEWS IMPACT</span>
+                </div>
+                <div className="text-xs font-bold text-emerald-400">
+                  {currentSymbol === 'XAUUSD' ? '+76 Bullish' : '+46 Bullish'}
+                </div>
+              </div>
+            </button>
+
             <div className="text-right font-mono bg-white/[0.02] border border-white/5 px-3.5 py-1.5 rounded-lg">
               <div className="text-[10px] uppercase tracking-wider text-slate-500">SPOT PRICE</div>
               <div className="text-lg font-bold text-white font-mono">${assetInfo.currentPrice.toFixed(2)}</div>
@@ -392,6 +415,13 @@ export default function App() {
               config={config}
             />
 
+            {/* D3-Powered Risk Dashboard: Sharpe, Sortino, Underwater Drawdown & VaR */}
+            <RiskDashboard
+              results={results}
+              config={config}
+              trades={trades}
+            />
+
             {/* Interactive Parameters Configurator */}
             <StrategyConfigurator
               config={config}
@@ -402,6 +432,29 @@ export default function App() {
 
             {/* Executed Trade Audit Log */}
             <TradeLogTable trades={trades} />
+          </div>
+        )}
+
+        {/* Dedicated D3 Quantitative Risk Dashboard Tab */}
+        {activeTab === 'risk' && (
+          <div className="space-y-6">
+            <RiskDashboard
+              results={results}
+              config={config}
+              trades={trades}
+            />
+
+            <PerformanceDashboard
+              results={results}
+              config={config}
+            />
+
+            <StrategyConfigurator
+              config={config}
+              onChangeConfig={setConfig}
+              onApplyPreset={handleSelectPreset}
+              currentPreset={currentPreset}
+            />
           </div>
         )}
 
@@ -474,6 +527,14 @@ export default function App() {
         isOpen={isCodeModalOpen}
         onClose={() => setIsCodeModalOpen(false)}
         config={config}
+      />
+
+      {/* Global News Market Sentiment Impact Engine Modal */}
+      <MarketSentimentModal
+        isOpen={isSentimentModalOpen}
+        onClose={() => setIsSentimentModalOpen(false)}
+        currentSymbol={currentSymbol}
+        onSelectSymbol={handleSelectSymbol}
       />
     </div>
   );

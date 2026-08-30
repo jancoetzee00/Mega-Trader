@@ -1,7 +1,8 @@
 import React from 'react';
 import { AssetSymbol, StrategyPreset, TimeFrame } from '../types';
 import { ASSETS } from '../data/presets';
-import { Play, Download, Terminal, Settings, BookOpen, Layers, Zap, Activity, Cpu, Radio, Shield, Monitor } from 'lucide-react';
+import { MarketSentimentHeaderGauge } from './MarketSentimentHeaderGauge';
+import { Play, Download, Terminal, Settings, BookOpen, Layers, Zap, Activity, Cpu, Radio, Shield, Monitor, ShieldAlert } from 'lucide-react';
 
 interface NavbarProps {
   currentSymbol: AssetSymbol;
@@ -10,11 +11,12 @@ interface NavbarProps {
   onSelectPreset: (preset: StrategyPreset) => void;
   timeframe: TimeFrame;
   onSelectTimeframe: (tf: TimeFrame) => void;
-  activeTab: 'ai-watcher' | 'backtest' | 'code' | 'simulation' | 'guide' | 'vpn' | 'desktop';
-  setActiveTab: (tab: 'ai-watcher' | 'backtest' | 'code' | 'simulation' | 'guide' | 'vpn' | 'desktop') => void;
+  activeTab: 'ai-watcher' | 'backtest' | 'risk' | 'code' | 'simulation' | 'guide' | 'vpn' | 'desktop';
+  setActiveTab: (tab: 'ai-watcher' | 'backtest' | 'risk' | 'code' | 'simulation' | 'guide' | 'vpn' | 'desktop') => void;
   onOpenCodeModal: () => void;
   onRunQuickSimulation: () => void;
   isAutoTrading?: boolean;
+  onOpenSentimentModal: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -29,6 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCodeModal,
   onRunQuickSimulation,
   isAutoTrading,
+  onOpenSentimentModal,
 }) => {
   const gold = ASSETS.XAUUSD;
   const oil = ASSETS.USOIL;
@@ -36,8 +39,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 border-b border-white/5 bg-[#08080A] backdrop-blur-md">
       {/* Top Commodity Live Ticker & Server Telemetry Strip */}
-      <div className="border-b border-white/5 px-4 sm:px-6 py-1.5 flex flex-wrap items-center justify-between text-xs font-mono bg-[#050507]/80">
-        <div className="flex items-center gap-4 overflow-x-auto py-0.5">
+      <div className="border-b border-white/5 px-4 sm:px-6 py-1.5 flex flex-wrap items-center justify-between gap-3 text-xs font-mono bg-[#050507]/80">
+        <div className="flex items-center gap-3 overflow-x-auto py-0.5">
           <div className="flex items-center gap-2">
             <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>
             <span className="text-slate-400 font-sans font-semibold text-[10px] tracking-wider uppercase">MT5 FEED</span>
@@ -75,7 +78,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
-          <div className="hidden md:flex items-center gap-2 text-slate-400 text-[10.5px] border-l border-white/5 pl-4">
+          {/* Market Sentiment Gauge in Top Header */}
+          <div className="border-l border-white/10 pl-3">
+            <MarketSentimentHeaderGauge
+              currentSymbol={currentSymbol}
+              onOpenModal={onOpenSentimentModal}
+            />
+          </div>
+
+          <div className="hidden xl:flex items-center gap-2 text-slate-400 text-[10.5px] border-l border-white/5 pl-4">
             <span className="text-slate-500 uppercase tracking-wider text-[9.5px]">SESSION:</span>
             <span className="text-emerald-400 font-medium">LONDON / NY OVERLAP</span>
           </div>
@@ -151,6 +162,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Activity className="h-3.5 w-3.5" />
             <span>Strategy & Analytics</span>
+          </button>
+
+          <button
+            id="tab-risk-btn"
+            onClick={() => setActiveTab('risk')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition whitespace-nowrap border ${
+              activeTab === 'risk'
+                ? 'bg-amber-500 text-slate-950 font-bold border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                : 'text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30'
+            }`}
+          >
+            <ShieldAlert className="h-3.5 w-3.5 text-amber-400" />
+            <span>Risk Dashboard (D3)</span>
+            <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/20 text-amber-300">D3</span>
           </button>
 
           <button

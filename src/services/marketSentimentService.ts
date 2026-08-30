@@ -1,0 +1,168 @@
+import { AssetSymbol, MarketSentimentData, NewsSentimentItem, SentimentBias } from '../types';
+
+export const GOLD_NEWS_FEED: NewsSentimentItem[] = [
+  {
+    id: 'news-gold-1',
+    timestamp: '3 mins ago',
+    source: 'Bloomberg Terminal',
+    headline: 'Fed Officials Signal Rate Pause Amid Cooling Core PCE Price Index',
+    summary: 'Federal Reserve governors emphasize declining inflation metrics, lowering benchmark 10-year US Treasury real yields and catalyzing institutional bullion allocation.',
+    symbol: 'XAUUSD',
+    sentimentScore: 84,
+    impactLevel: 'CRITICAL',
+    category: 'CENTRAL_BANK',
+    bias: 'EXTREME_BULLISH',
+  },
+  {
+    id: 'news-gold-2',
+    timestamp: '11 mins ago',
+    source: 'Reuters Wire',
+    headline: 'Middle East Geopolitical Friction Drives Unprecedented Central Bank Safe-Haven Bids',
+    summary: 'Sovereign reserves and institutional desk volume in London surge by +34% as geopolitical defense hedging intensifies spot Gold demand.',
+    symbol: 'XAUUSD',
+    sentimentScore: 78,
+    impactLevel: 'HIGH',
+    category: 'GEOPOLITICAL',
+    bias: 'BULLISH',
+  },
+  {
+    id: 'news-gold-3',
+    timestamp: '28 mins ago',
+    source: 'Kitco Metals Desk',
+    headline: 'US Dollar Index (DXY) Slides Below 103.80 Support on Dovish Rate Cut Bets',
+    summary: 'Dollar softening creates direct upward tailwinds across precious metals, breaking XAUUSD resistance barriers towards key liquidity pools.',
+    symbol: 'XAUUSD',
+    sentimentScore: 65,
+    impactLevel: 'MEDIUM',
+    category: 'MACRO_DXY',
+    bias: 'BULLISH',
+  },
+  {
+    id: 'news-gold-4',
+    timestamp: '52 mins ago',
+    source: 'World Gold Council',
+    headline: 'Q3 Physical Gold ETF Inflows Hit 4-Month High in North American Markets',
+    summary: 'Sustained institutional physical backing limits downside tail risk, cementing higher structural lows on intraday pullbacks.',
+    symbol: 'XAUUSD',
+    sentimentScore: 72,
+    impactLevel: 'HIGH',
+    category: 'SUPPLY_DEMAND',
+    bias: 'BULLISH',
+  },
+  {
+    id: 'news-gold-5',
+    timestamp: '1h 14m ago',
+    source: 'WSJ Markets',
+    headline: 'CFTC Commitments of Traders Report Shows Net Speculative Long Positions at 82nd Percentile',
+    summary: 'Hedge funds and CTA momentum algorithms reinforce trend-following buy orders with stop-loss protection elevated above $2,320 support.',
+    symbol: 'XAUUSD',
+    sentimentScore: 60,
+    impactLevel: 'MEDIUM',
+    category: 'MACRO_DXY',
+    bias: 'BULLISH',
+  }
+];
+
+export const OIL_NEWS_FEED: NewsSentimentItem[] = [
+  {
+    id: 'news-oil-1',
+    timestamp: '5 mins ago',
+    source: 'EIA Energy Report',
+    headline: 'US Commercial Crude Oil Inventories Drawdown Exceeds Forecast by 3.8M Barrels',
+    summary: 'Cushing storage utilization falls to multi-month lows, tightening domestic US WTI prompt spreads and creating instant bidding support.',
+    symbol: 'USOIL',
+    sentimentScore: 68,
+    impactLevel: 'HIGH',
+    category: 'INVENTORY',
+    bias: 'BULLISH',
+  },
+  {
+    id: 'news-oil-2',
+    timestamp: '19 mins ago',
+    source: 'OPEC+ Secretariat',
+    headline: 'OPEC+ Reaffirms Strict Voluntary Production Cuts Through End of Quarter',
+    summary: 'Saudi Arabia and allied producers maintain discipline with strict adherence to 2.2M bpd voluntary reductions despite speculative demand headwinds.',
+    symbol: 'USOIL',
+    sentimentScore: 62,
+    impactLevel: 'CRITICAL',
+    category: 'SUPPLY_DEMAND',
+    bias: 'BULLISH',
+  },
+  {
+    id: 'news-oil-3',
+    timestamp: '34 mins ago',
+    source: 'Reuters Energy',
+    headline: 'Global Manufacturing PMI Data Points to Mild Demand Moderation in Asia',
+    summary: 'Industrial refinery throughput in key Asian hubs shows minor seasonal tapering, moderating aggressive breakout continuation.',
+    symbol: 'USOIL',
+    sentimentScore: -28,
+    impactLevel: 'MEDIUM',
+    category: 'MACRO_DXY',
+    bias: 'BEARISH',
+  },
+  {
+    id: 'news-oil-4',
+    timestamp: '1h 05m ago',
+    source: 'S&P Global Platts',
+    headline: 'Red Sea Tanker Rerouting Adds $2.10/bbl Risk Premium to European Crude Deliveries',
+    summary: 'Extended transit times around the Cape of Good Hope keep prompt physical oil spreads supported at backwardation premiums.',
+    symbol: 'USOIL',
+    sentimentScore: 54,
+    impactLevel: 'HIGH',
+    category: 'GEOPOLITICAL',
+    bias: 'BULLISH',
+  },
+  {
+    id: 'news-oil-5',
+    timestamp: '1h 45m ago',
+    source: 'Baker Hughes',
+    headline: 'US Active Oil Rig Count Declines by 4 Units to 498 Total',
+    summary: 'Drilling stagnation caps long-term shale capacity expansion, providing medium-term supply floor.',
+    symbol: 'USOIL',
+    sentimentScore: 42,
+    impactLevel: 'LOW',
+    category: 'SUPPLY_DEMAND',
+    bias: 'BULLISH',
+  }
+];
+
+export function getMarketSentimentData(symbol: AssetSymbol): MarketSentimentData {
+  if (symbol === 'USOIL') {
+    return {
+      symbol: 'USOIL',
+      score: 46, // Moderately Bullish (+46)
+      bias: 'BULLISH',
+      bullishPercentage: 68,
+      bearishPercentage: 22,
+      neutralPercentage: 10,
+      geopoliticalRiskScore: 64,
+      monetaryPolicyScore: 25,
+      physicalSupplyDemandScore: 74,
+      dollarIndexImpactScore: 40,
+      estimatedPriceImpact: '+$1.85 / bbl (Upward Pressure)',
+      newsHeadlineSummary: 'OPEC+ quota discipline and EIA Cushing inventory draws outpace Asian demand moderation.',
+      actionableRecommendation: 'Crude Oil maintains a moderate bullish bias (+46). Favor pullback buying near Supertrend support with trailing stops tightened ahead of EIA inventory releases.',
+      newsItems: OIL_NEWS_FEED,
+      lastUpdated: 'Live Wire (Syncing)',
+    };
+  }
+
+  // Default: Gold (XAUUSD)
+  return {
+    symbol: 'XAUUSD',
+    score: 76, // Strong Bullish (+76)
+    bias: 'EXTREME_BULLISH',
+    bullishPercentage: 84,
+    bearishPercentage: 9,
+    neutralPercentage: 7,
+    geopoliticalRiskScore: 88,
+    monetaryPolicyScore: 82,
+    physicalSupplyDemandScore: 70,
+    dollarIndexImpactScore: 74,
+    estimatedPriceImpact: '+$24.60 / oz (Strong Bullish Tailwinds)',
+    newsHeadlineSummary: 'Cooling US inflation metrics & escalating safe-haven flows drive heavy institutional bullion demand.',
+    actionableRecommendation: 'Gold exhibits strong 84% bullish news consensus. AuraBreak M15 Trend Continuation filters have maximum tailwind alignment. Counter-trend shorts carry high risk.',
+    newsItems: GOLD_NEWS_FEED,
+    lastUpdated: 'Live Wire (Syncing)',
+  };
+}

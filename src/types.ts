@@ -116,12 +116,20 @@ export interface BacktestResults {
   maxDrawdownAmount: number;
   maxDrawdownPercent: number;
   sharpeRatio: number;
+  sortinoRatio: number;
+  calmarRatio: number;
+  valueAtRisk95: number; // 95% 1-trade VaR in USD
+  valueAtRisk95Pct: number; // 95% 1-trade VaR in %
+  expectedShortfall95: number; // CVaR in USD
+  profitStdDev: number;
+  downsideStdDev: number;
   avgTrade: number;
   avgWin: number;
   avgLoss: number;
   riskRewardRatio: number;
   consecutiveWins: number;
   consecutiveLosses: number;
+  maxDrawdownDurationBars: number;
   equityCurve: { time: number; timeStr: string; balance: number; equity: number; drawdown: number }[];
 }
 
@@ -247,5 +255,38 @@ export interface DatacenterLatencyBenchmark {
   brokerCluster: string;
   pingMs: number;
   quality: 'EXCELLENT' | 'GOOD' | 'FAIR' | 'HIGH_LATENCY';
+}
+
+export type SentimentBias = 'EXTREME_BEARISH' | 'BEARISH' | 'NEUTRAL' | 'BULLISH' | 'EXTREME_BULLISH';
+
+export interface NewsSentimentItem {
+  id: string;
+  timestamp: string;
+  source: string;
+  headline: string;
+  summary: string;
+  symbol: AssetSymbol | 'GLOBAL';
+  sentimentScore: number; // -100 to +100
+  impactLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  category: 'GEOPOLITICAL' | 'CENTRAL_BANK' | 'SUPPLY_DEMAND' | 'MACRO_DXY' | 'INVENTORY';
+  bias: SentimentBias;
+}
+
+export interface MarketSentimentData {
+  symbol: AssetSymbol;
+  score: number; // -100 to +100 (where -100 = Extreme Bearish, +100 = Extreme Bullish)
+  bias: SentimentBias;
+  bullishPercentage: number;
+  bearishPercentage: number;
+  neutralPercentage: number;
+  geopoliticalRiskScore: number; // 0 to 100
+  monetaryPolicyScore: number; // -100 to +100
+  physicalSupplyDemandScore: number; // -100 to +100
+  dollarIndexImpactScore: number; // -100 to +100
+  estimatedPriceImpact: string; // e.g. "+$16.80 / oz" or "-$1.45 / bbl"
+  newsHeadlineSummary: string;
+  actionableRecommendation: string;
+  newsItems: NewsSentimentItem[];
+  lastUpdated: string;
 }
 

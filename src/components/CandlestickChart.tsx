@@ -1,6 +1,21 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Candle, StrategyConfig, Trade } from '../types';
-import { Maximize2, RefreshCw, Eye, EyeOff, ZoomIn, ZoomOut, Compass, TrendingUp } from 'lucide-react';
+import { 
+  Maximize2, 
+  RefreshCw, 
+  Eye, 
+  EyeOff, 
+  ZoomIn, 
+  ZoomOut, 
+  Compass, 
+  TrendingUp, 
+  Clock, 
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight,
+  Activity,
+  Layers
+} from 'lucide-react';
 
 interface CandlestickChartProps {
   candles: Candle[];
@@ -519,38 +534,95 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({
               );
             })}
 
-          {/* Interactive Crosshair & Cursor */}
+          {/* Interactive Crosshair, Column Highlight & Axis Badges */}
           {mousePos && hoverIndex !== null && hoverIndex >= 0 && hoverIndex < displayCandles.length && (
             <g>
-              {/* Vertical Time Line */}
+              {/* Column Halo Highlight */}
+              <rect
+                x={getX(hoverIndex) - candleSpacing / 2}
+                y={margin.top}
+                width={candleSpacing}
+                height={plotHeight}
+                fill="#38bdf8"
+                fillOpacity="0.06"
+              />
+
+              {/* Vertical Time Crosshair Line */}
               <line
                 x1={getX(hoverIndex)}
                 y1={margin.top}
                 x2={getX(hoverIndex)}
                 y2={dimensions.height - margin.bottom}
-                stroke="#64748b"
+                stroke="#60a5fa"
                 strokeDasharray="3 3"
-                strokeWidth="1"
-                opacity="0.75"
+                strokeWidth="1.2"
+                opacity="0.8"
               />
-              {/* Horizontal Price Line */}
+
+              {/* Horizontal Price Crosshair Line */}
               <line
                 x1={margin.left}
                 y1={mousePos.y}
                 x2={dimensions.width - margin.right}
                 y2={mousePos.y}
-                stroke="#64748b"
+                stroke="#60a5fa"
                 strokeDasharray="3 3"
-                strokeWidth="1"
-                opacity="0.75"
+                strokeWidth="1.2"
+                opacity="0.8"
               />
-              {/* Price Tag on Right Axis */}
+
+              {/* High-Contrast Time Badge on X-Axis */}
+              {hoveredCandle && (
+                <g transform={`translate(${getX(hoverIndex)}, ${dimensions.height - margin.bottom})`}>
+                  <rect
+                    x="-42"
+                    y="2"
+                    width="84"
+                    height="18"
+                    fill="#030712"
+                    stroke="#3b82f6"
+                    strokeWidth="1.2"
+                    rx="3"
+                    filter="drop-shadow(0 2px 4px rgba(0,0,0,0.8))"
+                  />
+                  <text
+                    x="0"
+                    y="14"
+                    fill="#93c5fd"
+                    fontSize="9"
+                    fontFamily="monospace"
+                    fontWeight="bold"
+                    textAnchor="middle"
+                  >
+                    {hoveredCandle.timeStr}
+                  </text>
+                </g>
+              )}
+
+              {/* High-Contrast Price Badge on Right Y-Axis */}
               {(() => {
                 const hoverPrice = maxPrice - ((mousePos.y - margin.top) / plotHeight) * priceRange;
                 return (
                   <g transform={`translate(${dimensions.width - margin.right}, ${mousePos.y})`}>
-                    <rect x="0" y="-8" width="60" height="16" fill="#08080A" stroke="#475569" rx="2" />
-                    <text x="5" y="3.5" fill="#f8fafc" fontSize="9.5" fontFamily="monospace" fontWeight="bold">
+                    <rect
+                      x="0"
+                      y="-9"
+                      width="62"
+                      height="18"
+                      fill="#030712"
+                      stroke="#3b82f6"
+                      strokeWidth="1.2"
+                      rx="3"
+                      filter="drop-shadow(0 2px 4px rgba(0,0,0,0.8))"
+                    />
+                    <text
+                      x="6"
+                      y="3.5"
+                      fill="#93c5fd"
+                      fontSize="9.5"
+                      fontFamily="monospace"
+                      fontWeight="bold"
+                    >
                       {hoverPrice.toFixed(2)}
                     </text>
                   </g>
@@ -559,6 +631,131 @@ export const CandlestickChart: React.FC<CandlestickChartProps> = ({
             </g>
           )}
         </svg>
+
+        {/* Floating Precision OHLC & Indicator Crosshair Tooltip */}
+        {mousePos && hoverIndex !== null && hoverIndex >= 0 && hoverIndex < displayCandles.length && hoveredCandle && (
+          (() => {
+            const isBull = hoveredCandle.close >= hoveredCandle.open;
+            const priceChange = hoveredCandle.close - hoveredCandle.open;
+            const pctChange = (priceChange / hoveredCandle.open) * 100;
+            const candleRange = hoveredCandle.high - hoveredCandle.low;
+            const candleBody = Math.abs(hoveredCandle.close - hoveredCandle.open);
+
+            // Dynamic tooltip positioning to prevent viewport overflow
+            const tooltipWidth = 250;
+            const tooltipX = mousePos.x > dimensions.width - tooltipWidth - 30 
+              ? Math.max(10, mousePos.x - tooltipWidth - 20) 
+              : mousePos.x + 20;
+
+            const tooltipY = Math.min(
+              Math.max(10, mousePos.y - 90),
+              dimensions.height - 230
+            );
+
+            return (
+              <div
+                id="candle-crosshair-tooltip"
+                style={{
+                  left: `${tooltipX}px`,
+                  top: `${tooltipY}px`,
+                }}
+                className="absolute z-30 pointer-events-none w-[245px] p-3 rounded-xl bg-[#090b12]/95 backdrop-blur-md border border-slate-700/80 shadow-[0_10px_30px_rgba(0,0,0,0.8),0_0_15px_rgba(59,130,246,0.15)] text-xs text-slate-200 animate-in fade-in zoom-in-95 duration-100 font-sans"
+              >
+                {/* Header: Timestamp & Sentiment Badge */}
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
+                  <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-300 font-semibold">
+                    <Clock className="w-3 h-3 text-cyan-400" />
+                    <span>{hoveredCandle.timeStr}</span>
+                  </div>
+
+                  <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-mono font-bold flex items-center gap-0.5 ${
+                    isBull 
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' 
+                      : 'bg-rose-500/15 text-rose-300 border border-rose-500/30'
+                  }`}>
+                    {isBull ? <ArrowUpRight className="w-2.5 h-2.5" /> : <ArrowDownRight className="w-2.5 h-2.5" />}
+                    {isBull ? '+' : ''}{pctChange.toFixed(2)}%
+                  </span>
+                </div>
+
+                {/* OHLC Values 2x2 Grid */}
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 font-mono text-[11px]">
+                  <div className="flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800/80">
+                    <span className="text-slate-400 text-[10px]">OPEN</span>
+                    <span className="font-semibold text-slate-200">${hoveredCandle.open.toFixed(2)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800/80">
+                    <span className="text-emerald-400 text-[10px]">HIGH</span>
+                    <span className="font-semibold text-emerald-300">${hoveredCandle.high.toFixed(2)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800/80">
+                    <span className="text-rose-400 text-[10px]">LOW</span>
+                    <span className="font-semibold text-rose-300">${hoveredCandle.low.toFixed(2)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800/80">
+                    <span className={`text-[10px] font-bold ${isBull ? 'text-emerald-400' : 'text-rose-400'}`}>CLOSE</span>
+                    <span className={`font-bold ${isBull ? 'text-emerald-300' : 'text-rose-300'}`}>
+                      ${hoveredCandle.close.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Bar Metrics & Range */}
+                <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10.5px] font-mono text-slate-400">
+                  <div>
+                    <span className="text-slate-500">Δ Change: </span>
+                    <span className={priceChange >= 0 ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
+                      {priceChange >= 0 ? `+$${priceChange.toFixed(2)}` : `-$${Math.abs(priceChange).toFixed(2)}`}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Range: </span>
+                    <span className="text-slate-300 font-semibold">${candleRange.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Quantitative Indicator Snapshots */}
+                {(hoveredCandle.emaFast || hoveredCandle.supertrend || hoveredCandle.atr) && (
+                  <div className="mt-2 pt-1.5 border-t border-slate-800/60 grid grid-cols-2 gap-1 text-[10px] font-mono">
+                    {hoveredCandle.emaFast && (
+                      <div className="text-amber-400/90 truncate">
+                        <span className="text-slate-500">EMA({config.fastEmaPeriod}): </span>
+                        {hoveredCandle.emaFast.toFixed(2)}
+                      </div>
+                    )}
+                    {hoveredCandle.emaSlow && (
+                      <div className="text-cyan-400/90 truncate">
+                        <span className="text-slate-500">EMA({config.slowEmaPeriod}): </span>
+                        {hoveredCandle.emaSlow.toFixed(2)}
+                      </div>
+                    )}
+                    {hoveredCandle.supertrend && (
+                      <div className="text-emerald-400/90 truncate col-span-2 flex items-center justify-between">
+                        <span className="text-slate-500">Supertrend:</span>
+                        <span className={hoveredCandle.supertrendDir === 1 ? 'text-emerald-400' : 'text-rose-400'}>
+                          ${hoveredCandle.supertrend.toFixed(2)} ({hoveredCandle.supertrendDir === 1 ? 'BULL' : 'BEAR'})
+                        </span>
+                      </div>
+                    )}
+                    {hoveredCandle.atr && (
+                      <div className="text-purple-400/90">
+                        <span className="text-slate-500">ATR: </span>{hoveredCandle.atr.toFixed(2)}
+                      </div>
+                    )}
+                    {hoveredCandle.rsi && (
+                      <div className="text-blue-400/90">
+                        <span className="text-slate-500">RSI: </span>{hoveredCandle.rsi.toFixed(1)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()
+        )}
       </div>
 
       {/* Chart Footer Indicator Legend */}

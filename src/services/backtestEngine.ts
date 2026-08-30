@@ -259,9 +259,11 @@ export function runBacktest(candles: Candle[], config: StrategyConfig): { result
       equity = balance;
     }
 
-    // Drawdown Calculation
-    if (equity > peakEquity) peakEquity = equity;
-    const currentDrawdown = peakEquity - equity;
+    // Drawdown Calculation & Duration Tracking
+    if (equity >= peakEquity) {
+      peakEquity = equity;
+    }
+    const currentDrawdown = Math.max(0, peakEquity - equity);
     const currentDrawdownPct = peakEquity > 0 ? (currentDrawdown / peakEquity) * 100 : 0;
 
     if (currentDrawdown > maxDrawdownAmt) maxDrawdownAmt = currentDrawdown;
@@ -278,6 +280,22 @@ export function runBacktest(candles: Candle[], config: StrategyConfig): { result
     }
   }
 
+  // Compute Drawdown duration in bars
+  let currentDdDuration = 0;
+  let maxDdDuration = 0;
+  let runningPeak = config.accountBalance;
+  for (const pt of equityCurve) {
+    if (pt.equity >= runningPeak) {
+      runningPeak = pt.equity;
+      currentDdDuration = 0;
+    } else {
+      currentDdDuration++;
+      if (currentDdDuration > maxDdDuration) {
+        maxDdDuration = currentDdDuration;
+      }
+    }
+  }
+
   const totalTrades = trades.length;
   const winRate = totalTrades > 0 ? (winningTradesCount / totalTrades) * 100 : 0;
   const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 99.0 : 0;
@@ -287,14 +305,47 @@ export function runBacktest(candles: Candle[], config: StrategyConfig): { result
   const riskRewardRatio = avgLoss > 0 ? avgWin / avgLoss : 0;
   const avgTrade = totalTrades > 0 ? netProfit / totalTrades : 0;
 
-  // Simple Sharpe Approximation
+  // Quantitative Return Distributions for Sharpe & Sortino & VaR
   const returns = trades.map(t => (t.profit / config.accountBalance) * 100);
   const meanReturn = returns.length > 0 ? returns.reduce((a, b) => a + b, 0) / returns.length : 0;
+  
+  // Total Standard Deviation (for Sharpe)
   const variance = returns.length > 1
     ? returns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) / (returns.length - 1)
     : 0.01;
   const stdDev = Math.sqrt(variance);
   const sharpeRatio = stdDev > 0 ? Number(((meanReturn / stdDev) * Math.sqrt(252)).toFixed(2)) : 0;
+
+  // Downside Standard Deviation (for Sortino Ratio - penalizes only negative returns)
+  const negativeReturns = returns.filter(r => r < 0);
+  const downsideVariance = negativeReturns.length > 0
+    ? negativeReturns.reduce((sum, r) => sum + Math.pow(r, 2), 0) / returns.length
+    : 0.0001;
+  const downsideStdDev = Math.sqrt(downsideVariance);
+  const sortinoRatio = downsideStdDev > 0
+    ? Number(((meanReturn / downsideStdDev) * Math.sqrt(252)).toFixed(2))
+    : Number((sharpeRatio * 1.5).toFixed(2));
+
+  // Calmar Ratio = Annualized Return % / Max Drawdown %
+  const totalReturnPct = config.accountBalance > 0 ? (netProfit / config.accountBalance) * 100 : 0;
+  const calmarRatio = maxDrawdownPct > 0
+    ? Number((totalReturnPct / maxDrawdownPct).toFixed(2))
+    : totalReturnPct > 0 ? 10.0 : 0;
+
+  // Value at Risk (VaR 95% Parametric & Empirical)
+  const sortedProfits = trades.map(t => t.profit).sort((a, b) => a - b);
+  const varIndex = Math.floor(sortedProfits.length * 0.05);
+  const empiricalVaR = sortedProfits.length > 0 ? Math.abs(Math.min(0, sortedProfits[varIndex])) : 0;
+  const parametricVaRPct = Math.max(0, (1.645 * stdDev) - meanReturn);
+  const parametricVaR = (parametricVaRPct / 100) * config.accountBalance;
+  const valueAtRisk95 = Number((empiricalVaR > 0 ? empiricalVaR : parametricVaR).toFixed(2));
+  const valueAtRisk95Pct = config.accountBalance > 0 ? Number(((valueAtRisk95 / config.accountBalance) * 100).toFixed(2)) : 0;
+
+  // Conditional VaR (Expected Shortfall - average of worst 5% tail losses)
+  const tailLosses = sortedProfits.slice(0, Math.max(1, varIndex + 1));
+  const expectedShortfall95 = tailLosses.length > 0
+    ? Number(Math.abs(tailLosses.reduce((a, b) => a + b, 0) / tailLosses.length).toFixed(2))
+    : valueAtRisk95;
 
   const results: BacktestResults = {
     totalTrades,
@@ -310,12 +361,20 @@ export function runBacktest(candles: Candle[], config: StrategyConfig): { result
     maxDrawdownAmount: Number(maxDrawdownAmt.toFixed(2)),
     maxDrawdownPercent: Number(maxDrawdownPct.toFixed(2)),
     sharpeRatio,
+    sortinoRatio,
+    calmarRatio,
+    valueAtRisk95,
+    valueAtRisk95Pct,
+    expectedShortfall95,
+    profitStdDev: Number(stdDev.toFixed(2)),
+    downsideStdDev: Number(downsideStdDev.toFixed(2)),
     avgTrade: Number(avgTrade.toFixed(2)),
     avgWin: Number(avgWin.toFixed(2)),
     avgLoss: Number(avgLoss.toFixed(2)),
     riskRewardRatio: Number(riskRewardRatio.toFixed(2)),
     consecutiveWins: maxConsecutiveWins,
     consecutiveLosses: maxConsecutiveLosses,
+    maxDrawdownDurationBars: maxDdDuration,
     equityCurve,
   };
 
