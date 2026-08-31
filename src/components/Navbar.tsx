@@ -21,7 +21,8 @@ import {
   Database,
   User as UserIcon,
   ShieldCheck,
-  Wallet
+  Wallet,
+  Bell
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -42,6 +43,7 @@ interface NavbarProps {
   vaultBalance?: number;
   mt5AccountNumber?: string;
   mt5IsConnected?: boolean;
+  onOpenNotificationModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -62,6 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   vaultBalance = 6250.00,
   mt5AccountNumber = '50928412',
   mt5IsConnected = true,
+  onOpenNotificationModal,
 }) => {
   const gold = ASSETS.XAUUSD;
   const oil = ASSETS.USOIL;
@@ -357,6 +360,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="md:hidden">CLOUD</span>
             {currentUser && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>}
           </button>
+
+          {/* Notification Alerts Settings Button */}
+          {onOpenNotificationModal && (
+            <button
+              id="trade-notifications-btn"
+              onClick={onOpenNotificationModal}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-mono font-bold border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)] transition active:scale-95 cursor-pointer relative"
+              title="Configure Browser & Sound Notifications for AI Auto-Trader"
+            >
+              <Bell className="h-3.5 w-3.5 text-amber-400" />
+              <span className="hidden xl:inline">ALERTS</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping absolute -top-0.5 -right-0.5"></span>
+            </button>
+          )}
 
           {/* Quick Desktop Download Button */}
           <button

@@ -20,9 +20,12 @@ import { RiskDashboard } from './components/RiskDashboard';
 import { MarketSentimentModal } from './components/MarketSentimentModal';
 import { FirebaseAuthModal } from './components/FirebaseAuthModal';
 import { WalletAndMT5Terminal } from './components/WalletAndMT5Terminal';
+import { NotificationToastContainer } from './components/NotificationToastContainer';
+import { NotificationSettingsModal } from './components/NotificationSettingsModal';
+import { sendTradingNotification } from './services/notificationService';
 import { auth, saveBacktestToCloud } from './firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { Activity, ShieldAlert, Sparkles, TrendingUp, Flame, Play, Download, Terminal, Radio, Cpu, Layers, BrainCircuit, ShieldCheck, Zap, Shield, Monitor, Globe, Database, Cloud, Wallet } from 'lucide-react';
+import { Activity, ShieldAlert, Sparkles, TrendingUp, Flame, Play, Download, Terminal, Radio, Cpu, Layers, BrainCircuit, ShieldCheck, Zap, Shield, Monitor, Globe, Database, Cloud, Wallet, Bell } from 'lucide-react';
 
 export default function App() {
   const [currentSymbol, setCurrentSymbol] = useState<AssetSymbol>('XAUUSD');
@@ -34,6 +37,7 @@ export default function App() {
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [isSentimentModalOpen, setIsSentimentModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Subscribe to Firebase Auth state
@@ -154,6 +158,20 @@ export default function App() {
       },
       ...prev,
     ]);
+
+    // Dispatch Browser & Sound Notification
+    sendTradingNotification({
+      id: `open-${newTrade.id}`,
+      type: 'TRADE_OPEN',
+      title: `🤖 AI Auto-Trader: Opened ${type} Position`,
+      message: `${currentSymbol} ${lot} Lots @ $${entry.toFixed(2)} | SL: $${sl.toFixed(2)} | TP: $${tp.toFixed(2)} (${reason})`,
+      timestamp: timeStr,
+      symbol: currentSymbol,
+      orderType: type,
+      lotSize: lot,
+      price: entry,
+      ticket: newTrade.ticket,
+    });
   };
 
   // Autonomous AI Trading Loop on Bar progression
@@ -200,6 +218,18 @@ export default function App() {
           },
           ...prev,
         ]);
+
+        // Dispatch Browser & Sound Notification for Take Profit Win
+        sendTradingNotification({
+          id: `tp-${closedTrade.id}`,
+          type: 'TRADE_CLOSE_TP',
+          title: `🎯 AI Auto-Trader: TAKE PROFIT HIT!`,
+          message: `Closed #${closedTrade.ticket} ${currentSymbol} at TP $${openTrade.tp.toFixed(2)} • Net Profit: +$${closedTrade.profit.toFixed(2)} USD (+${rMultiple}R)`,
+          timestamp: timeStr,
+          pnl: closedTrade.profit,
+          symbol: currentSymbol,
+          ticket: closedTrade.ticket,
+        });
         return;
       }
 
@@ -226,6 +256,18 @@ export default function App() {
           },
           ...prev,
         ]);
+
+        // Dispatch Browser & Sound Notification for Stop Loss
+        sendTradingNotification({
+          id: `sl-${closedTrade.id}`,
+          type: 'TRADE_CLOSE_SL',
+          title: `🛡️ AI Auto-Trader: Stop Loss Executed`,
+          message: `Closed #${closedTrade.ticket} ${currentSymbol} at SL $${openTrade.currentSl.toFixed(2)} • Risk Capped at -$${Math.abs(closedTrade.profit).toFixed(2)} USD`,
+          timestamp: timeStr,
+          pnl: closedTrade.profit,
+          symbol: currentSymbol,
+          ticket: closedTrade.ticket,
+        });
         return;
       }
 
@@ -243,6 +285,17 @@ export default function App() {
           },
           ...prev,
         ]);
+
+        // Dispatch Notification for Break-Even adjustment
+        sendTradingNotification({
+          id: `be-${openTrade.id}-${Date.now()}`,
+          type: 'TRADE_BREAKEVEN',
+          title: `🔒 AI Auto-Trader: Break-Even Protected`,
+          message: `Position #${openTrade.ticket} moved SL to Break-Even at $${beSl.toFixed(2)} (Zero Downside Risk)`,
+          timestamp: timeStr,
+          symbol: currentSymbol,
+          ticket: openTrade.ticket,
+        });
       } else {
         // Update floating PnL on active trade
         setOpenTrade((prev) => prev ? { ...prev, profit: floatingPnL } : null);
@@ -304,6 +357,7 @@ export default function App() {
         onOpenSentimentModal={() => setIsSentimentModalOpen(true)}
         currentUser={currentUser}
         onOpenAuthModal={() => setIsAuthModalOpen(true)}
+        onOpenNotificationModal={() => setIsNotificationModalOpen(true)}
       />
 
       {/* Main Content Body */}
@@ -391,6 +445,7 @@ export default function App() {
               openTrade={openTrade}
               executedTrades={liveExecutedTrades.length > 0 ? liveExecutedTrades : trades}
               aiLogs={aiLogs}
+              onOpenNotificationModal={() => setIsNotificationModalOpen(true)}
             />
 
             {/* Live Synchronized Chart with AI Order Overlay */}
@@ -499,6 +554,7 @@ export default function App() {
               setActiveCandleIndex={setActiveCandleIndex}
               isPlaying={isPlaying}
               setIsPlaying={setIsPlaying}
+              onOpenNotificationModal={() => setIsNotificationModalOpen(true)}
             />
 
             {/* Synchronized Chart for current simulated candle */}
@@ -551,6 +607,15 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* In-App Floating Toast Notifications Stack */}
+      <NotificationToastContainer />
+
+      {/* Live Trade Notifications & Audio Settings Modal */}
+      <NotificationSettingsModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+      />
 
       {/* Quick Export Code Modal */}
       <CodeViewerModal

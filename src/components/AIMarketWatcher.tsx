@@ -36,6 +36,7 @@ import {
   ChevronRight,
   Download,
   Monitor,
+  Bell,
 } from 'lucide-react';
 import { generateFullDesktopSuiteZip, triggerBlobDownload } from '../services/desktopPackageService';
 
@@ -51,6 +52,7 @@ interface AIMarketWatcherProps {
   openTrade: Trade | null;
   executedTrades: Trade[];
   aiLogs: AILogItem[];
+  onOpenNotificationModal?: () => void;
 }
 
 export const AIMarketWatcher: React.FC<AIMarketWatcherProps> = ({
@@ -65,6 +67,7 @@ export const AIMarketWatcher: React.FC<AIMarketWatcherProps> = ({
   openTrade,
   executedTrades,
   aiLogs,
+  onOpenNotificationModal,
 }) => {
   const [prediction, setPrediction] = useState<AITrendPrediction | null>(null);
   const [isScanning, setIsScanning] = useState<boolean>(false);
@@ -177,6 +180,18 @@ export const AIMarketWatcher: React.FC<AIMarketWatcherProps> = ({
               <RefreshCw className={`h-3.5 w-3.5 text-amber-400 ${isScanning ? 'animate-spin' : ''}`} />
               <span>{isScanning ? 'AI SCANNING...' : 'SCAN MARKET'}</span>
             </button>
+
+            {onOpenNotificationModal && (
+              <button
+                id="btn-ai-notif-modal"
+                onClick={onOpenNotificationModal}
+                className="px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-mono font-semibold flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+                title="Trade Notification Alerts Settings"
+              >
+                <Bell className="h-3.5 w-3.5 text-amber-400" />
+                <span className="hidden sm:inline">ALERTS</span>
+              </button>
+            )}
 
             <button
               id="btn-toggle-autotrade"

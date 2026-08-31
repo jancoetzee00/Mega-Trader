@@ -338,3 +338,28 @@ export interface MT5AccountProfile {
   errorMessage?: string;
 }
 
+export type AppNotificationType = 'TRADE_OPEN' | 'TRADE_CLOSE_TP' | 'TRADE_CLOSE_SL' | 'TRADE_BREAKEVEN' | 'SYSTEM';
+
+export interface AppNotificationItem {
+  id: string;
+  type: AppNotificationType;
+  title: string;
+  message: string;
+  timestamp: string;
+  pnl?: number;
+  symbol?: string;
+  ticket?: number;
+  orderType?: 'BUY' | 'SELL';
+  lotSize?: number;
+  price?: number;
+}
+
+export interface NotificationSettings {
+  browserNotificationsEnabled: boolean;
+  audioChimesEnabled: boolean;
+  notifyOnOpen: boolean;
+  notifyOnCloseTP: boolean;
+  notifyOnCloseSL: boolean;
+  notifyOnBreakeven: boolean;
+}
+
