@@ -2,7 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  signInWithPopup, 
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInAnonymously,
+  updateProfile,
   signOut, 
   onAuthStateChanged,
   User 
@@ -45,7 +51,11 @@ try {
 
 export const db = firestoreInstance;
 export const auth = getAuth(app);
+
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 
 // Error Handling Infrastructure
 export enum OperationType {
@@ -107,26 +117,93 @@ export async function testFirestoreConnection() {
 }
 testFirestoreConnection();
 
+// Helper to sync user profile safely to Firestore
+async function syncUserProfileSafely(user: User, customDisplayName?: string) {
+  try {
+    const userRef = doc(db, 'users', user.uid);
+    const photoURL = user.photoURL && user.photoURL.length <= 512 ? user.photoURL : '';
+    await setDoc(userRef, {
+      userId: user.uid,
+      email: user.email || `${user.uid.slice(0, 8)}@trader.internal`,
+      displayName: customDisplayName || user.displayName || 'Algorithmic Trader',
+      photoURL: photoURL,
+      defaultSymbol: 'XAUUSD',
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (err) {
+    console.warn('Non-blocking user profile sync warning:', err);
+  }
+}
+
 // Authentication helpers
 export async function signInWithGoogle(): Promise<User | null> {
   try {
     const result = await signInWithPopup(auth, googleProvider);
     if (result.user) {
-      // Sync user profile to Firestore
-      const userRef = doc(db, 'users', result.user.uid);
-      await setDoc(userRef, {
-        userId: result.user.uid,
-        email: result.user.email || '',
-        displayName: result.user.displayName || 'Algorithmic Trader',
-        photoURL: result.user.photoURL || '',
-        defaultSymbol: 'XAUUSD',
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+      await syncUserProfileSafely(result.user);
       return result.user;
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Google Sign-in Error:', error);
+    if (error?.code === 'auth/popup-blocked') {
+      throw new Error('Sign-in popup was blocked by your browser. Please allow popups or use Email / Demo sign-in.');
+    }
+    if (error?.code === 'auth/popup-closed-by-user') {
+      throw new Error('Sign-in popup was closed before completing. Please click Sign In again.');
+    }
+    if (error?.code === 'auth/unauthorized-domain') {
+      throw new Error('This web domain is not yet authorized in Firebase OAuth. You can use Email or Demo login.');
+    }
+    throw error;
+  }
+}
+
+export async function signInWithEmail(email: string, pass: string): Promise<User> {
+  try {
+    const res = await signInWithEmailAndPassword(auth, email, pass);
+    await syncUserProfileSafely(res.user);
+    return res.user;
+  } catch (error: any) {
+    console.error('Email sign in error:', error);
+    if (error?.code === 'auth/user-not-found' || error?.code === 'auth/wrong-password' || error?.code === 'auth/invalid-credential') {
+      throw new Error('Invalid email or password. Please verify your credentials or create a new account.');
+    }
+    if (error?.code === 'auth/invalid-email') {
+      throw new Error('Please enter a valid email address.');
+    }
+    throw error;
+  }
+}
+
+export async function registerWithEmail(email: string, pass: string, displayName?: string): Promise<User> {
+  try {
+    const res = await createUserWithEmailAndPassword(auth, email, pass);
+    if (displayName) {
+      await updateProfile(res.user, { displayName });
+    }
+    await syncUserProfileSafely(res.user, displayName);
+    return res.user;
+  } catch (error: any) {
+    console.error('Email registration error:', error);
+    if (error?.code === 'auth/email-already-in-use') {
+      throw new Error('An account with this email already exists. Please sign in instead.');
+    }
+    if (error?.code === 'auth/weak-password') {
+      throw new Error('Password must be at least 6 characters long.');
+    }
+    throw error;
+  }
+}
+
+export async function signInAsDemoTrader(): Promise<User> {
+  try {
+    const res = await signInAnonymously(auth);
+    await updateProfile(res.user, { displayName: 'Pro Quant Trader' });
+    await syncUserProfileSafely(res.user, 'Pro Quant Trader');
+    return res.user;
+  } catch (error: any) {
+    console.error('Demo trader sign in error:', error);
     throw error;
   }
 }

@@ -54,13 +54,16 @@ interface WalletAndMT5TerminalProps {
 }
 
 const BROKER_PRESETS = [
-  { name: 'IC Markets Global', server: 'ICMarketsSC-Live02', defaultPing: 12, type: 'LIVE' as MT5AccountType },
-  { name: 'Pepperstone Group', server: 'Pepperstone-Demo01', defaultPing: 18, type: 'DEMO' as MT5AccountType },
-  { name: 'Exness Technologies', server: 'Exness-Real14', defaultPing: 14, type: 'LIVE' as MT5AccountType },
-  { name: 'FTMO Prop Challenge', server: 'FTMO-Server-02', defaultPing: 16, type: 'PROP_FIRM' as MT5AccountType },
-  { name: 'Vantage International', server: 'VantageFX-Live-03', defaultPing: 22, type: 'LIVE' as MT5AccountType },
-  { name: 'Tickmill Pro', server: 'Tickmill-LiveUK', defaultPing: 15, type: 'LIVE' as MT5AccountType },
-  { name: 'XM Global', server: 'XMGlobal-Real48', defaultPing: 25, type: 'LIVE' as MT5AccountType },
+  { name: 'FxPro Live (Real01)', server: 'FxPro.com-Real01', defaultPing: 7, type: 'LIVE' as MT5AccountType, region: 'London LD4' },
+  { name: 'FxPro Live (Real02)', server: 'FxPro.com-Real02', defaultPing: 8, type: 'LIVE' as MT5AccountType, region: 'Frankfurt FR2' },
+  { name: 'FxPro Live (Real05)', server: 'FxPro.com-Real05', defaultPing: 6, type: 'LIVE' as MT5AccountType, region: 'Equinix LD5' },
+  { name: 'FxPro Global MT5', server: 'FxPro-MT5Live', defaultPing: 9, type: 'LIVE' as MT5AccountType, region: 'Global Gateway' },
+  { name: 'IC Markets Global', server: 'ICMarketsSC-Live02', defaultPing: 12, type: 'LIVE' as MT5AccountType, region: 'Sydney / NY' },
+  { name: 'Pepperstone Group', server: 'Pepperstone-Demo01', defaultPing: 18, type: 'DEMO' as MT5AccountType, region: 'Melbourne' },
+  { name: 'Exness Technologies', server: 'Exness-Real14', defaultPing: 14, type: 'LIVE' as MT5AccountType, region: 'London' },
+  { name: 'FTMO Prop Challenge', server: 'FTMO-Server-02', defaultPing: 16, type: 'PROP_FIRM' as MT5AccountType, region: 'Prague' },
+  { name: 'Tickmill Pro', server: 'Tickmill-LiveUK', defaultPing: 15, type: 'LIVE' as MT5AccountType, region: 'London' },
+  { name: 'XM Global', server: 'XMGlobal-Real48', defaultPing: 25, type: 'LIVE' as MT5AccountType, region: 'Cyprus' },
 ];
 
 const INITIAL_TRANSACTIONS: WalletTransactionRecord[] = [
@@ -1412,24 +1415,30 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
       {/* --- SUB-TAB 5: LOGIN TO MT5 --- */}
       {activeSubTab === 'mt5-login' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* MT5 Login Form */}
+            {/* MT5 Login Form */}
           <div className="lg:col-span-2 p-6 sm:p-8 rounded-2xl bg-slate-900/90 border border-white/10 space-y-6">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Server className="w-5 h-5 text-amber-400" />
-                  Login to MetaTrader 5 (MT5) Terminal
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Connect your broker account credentials to enable automated MQL5 execution and real-time equity synchronization.
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Server className="w-5 h-5 text-amber-400" />
+                    FxPro & MT5 Live Account Login
+                  </h3>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    DIRECT BROKER GATEWAY
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Authenticate your live FxPro MT5 trading account for automated algorithmic execution and real-time equity sync.
                 </p>
               </div>
-              <span className={`text-xs font-mono font-bold px-3 py-1 rounded-lg border ${
+              <span className={`text-xs font-mono font-bold px-3 py-1.5 rounded-lg border self-start sm:self-center flex items-center gap-1.5 ${
                 mt5Profile.status === 'CONNECTED'
                   ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
                   : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
               }`}>
-                {mt5Profile.status}
+                <span className={`w-2 h-2 rounded-full ${mt5Profile.status === 'CONNECTED' ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`}></span>
+                <span>{mt5Profile.brokerName.includes('FxPro') ? 'FXPRO ' : ''}{mt5Profile.status}</span>
               </span>
             </div>
 
@@ -1440,10 +1449,64 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
               </div>
             )}
 
-            {/* Popular Broker Presets Bar */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Select Broker Preset</label>
+            {/* Dedicated FxPro 1-Click Fast Connect Banner */}
+            <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent border border-amber-500/30 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center text-slate-950 font-black text-xs font-mono">
+                    FP
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-white tracking-wide">FxPro Direct Live Server Quick-Select</span>
+                    <span className="ml-2 text-[10px] font-mono text-emerald-400">London LD4 Equinix (6ms)</span>
+                  </div>
+                </div>
+                <a
+                  href="https://direct.fxpro.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-mono transition"
+                >
+                  <span>FxPro Direct Portal</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+
+              {/* FxPro Quick Server Chips */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                  { name: 'FxPro Real01 (UK/EU)', server: 'FxPro.com-Real01', ping: '6ms' },
+                  { name: 'FxPro Real02 (Global)', server: 'FxPro.com-Real02', ping: '8ms' },
+                  { name: 'FxPro Real05 (Raw ECN)', server: 'FxPro.com-Real05', ping: '7ms' },
+                  { name: 'FxPro MT5 Master', server: 'FxPro-MT5Live', ping: '9ms' }
+                ].map((fp) => (
+                  <button
+                    key={fp.server}
+                    type="button"
+                    onClick={() => {
+                      setLoginServer(fp.server);
+                      setLoginAccountType('LIVE');
+                    }}
+                    className={`px-2.5 py-2 rounded-lg border text-left text-xs transition font-mono cursor-pointer flex flex-col justify-between ${
+                      loginServer === fp.server
+                        ? 'bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-[0_0_12px_rgba(245,158,11,0.3)]'
+                        : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:border-amber-500/50 hover:bg-slate-900'
+                    }`}
+                  >
+                    <div className="truncate font-semibold text-[11px]">{fp.name}</div>
+                    <div className="flex items-center justify-between text-[10px] opacity-80 mt-1">
+                      <span className="truncate">{fp.server}</span>
+                      <span className={loginServer === fp.server ? 'text-slate-900 font-bold' : 'text-emerald-400'}>{fp.ping}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Other Popular Broker Presets */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">All Broker Presets</label>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {BROKER_PRESETS.map((preset) => (
                   <button
                     key={preset.name}
@@ -1452,43 +1515,49 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
                       setLoginServer(preset.server);
                       setLoginAccountType(preset.type);
                     }}
-                    className={`p-2.5 rounded-xl border text-left text-xs transition font-mono cursor-pointer ${
+                    className={`p-2 rounded-lg border text-left text-xs transition font-mono cursor-pointer ${
                       loginServer === preset.server
                         ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-sm'
                         : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
                     }`}
                   >
-                    <div className="font-bold text-white truncate">{preset.name.split(' ')[0]}</div>
+                    <div className="font-bold text-white truncate text-[11px]">{preset.name}</div>
                     <div className="text-[10px] text-slate-400 truncate">{preset.server}</div>
                   </button>
                 ))}
               </div>
             </div>
 
-            <form onSubmit={handleConnectMT5} className="space-y-4">
+            <form onSubmit={handleConnectMT5} className="space-y-4 pt-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Broker Server */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Broker Server Address</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-slate-300">Broker Server Address</label>
+                    <span className="text-[10px] font-mono text-slate-400">e.g. FxPro.com-Real01</span>
+                  </div>
                   <input
                     type="text"
                     value={loginServer}
                     onChange={(e) => setLoginServer(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-xs focus:border-amber-500 focus:outline-none"
-                    placeholder="e.g. ICMarketsSC-Live02"
+                    placeholder="e.g. FxPro.com-Real01 or FxPro-MT5Live"
                     required
                   />
                 </div>
 
                 {/* Account Number */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">MT5 Login / Account Number</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-slate-300">FxPro / MT5 Account Login ID</label>
+                    <span className="text-[10px] font-mono text-slate-400">Found in FxPro Direct</span>
+                  </div>
                   <input
                     type="text"
                     value={loginAccount}
                     onChange={(e) => setLoginAccount(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-xs focus:border-amber-500 focus:outline-none"
-                    placeholder="e.g. 50928412"
+                    placeholder="e.g. 8049215 or 50928412"
                     required
                   />
                 </div>
@@ -1497,14 +1566,17 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Password */}
                 <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-xs font-semibold text-slate-300">Master or Investor Password</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-slate-300">Trader or Investor Password</label>
+                    <span className="text-[10px] text-slate-500">Encrypted in TLS 1.3 socket</span>
+                  </div>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       className="w-full pl-3.5 pr-10 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-xs focus:border-amber-500 focus:outline-none"
-                      placeholder="Enter MT5 account password"
+                      placeholder="Enter FxPro MT5 account password"
                     />
                     <button
                       type="button"
@@ -1518,7 +1590,7 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
 
                 {/* Account Type */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Account Mode</label>
+                  <label className="text-xs font-semibold text-slate-300">Account Type</label>
                   <select
                     value={loginAccountType}
                     onChange={(e) => setLoginAccountType(e.target.value as MT5AccountType)}
@@ -1533,7 +1605,10 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
 
               {/* Leverage Selection */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300">Account Leverage</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-slate-300">Account Leverage Setting</label>
+                  <span className="text-[10px] font-mono text-slate-400">Matches FxPro profile</span>
+                </div>
                 <div className="grid grid-cols-5 gap-2">
                   {[30, 100, 200, 500, 1000].map(lev => (
                     <button
@@ -1557,17 +1632,17 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
                   id="connect-mt5-btn"
                   type="submit"
                   disabled={isConnectingMT5 || !loginAccount || !loginServer}
-                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold font-mono text-xs tracking-wide shadow-lg shadow-amber-500/25 transition active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                  className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold font-mono text-xs tracking-wide shadow-lg shadow-amber-500/25 transition active:scale-98 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {isConnectingMT5 ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Authenticating MT5 Terminal...</span>
+                      <span>Authenticating Live FxPro Socket Gateway...</span>
                     </>
                   ) : (
                     <>
                       <KeyRound className="w-4 h-4" />
-                      <span>Connect & Authenticate MT5</span>
+                      <span>Connect to Live {loginServer.toLowerCase().includes('fxpro') ? 'FxPro' : 'Broker'} Account</span>
                     </>
                   )}
                 </button>
@@ -1576,7 +1651,7 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
                   <button
                     type="button"
                     onClick={handleDisconnectMT5}
-                    className="px-4 py-3 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-mono font-bold transition cursor-pointer"
+                    className="px-4 py-3.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-mono font-bold transition cursor-pointer"
                   >
                     Disconnect
                   </button>
@@ -1587,7 +1662,10 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
             {/* Connection Diagnostics Terminal Output */}
             {connectionLogs.length > 0 && (
               <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1 font-mono text-[11px] text-emerald-400">
-                <div className="text-[10px] text-slate-500 uppercase">Live Handshake Console:</div>
+                <div className="text-[10px] text-slate-500 uppercase flex items-center justify-between">
+                  <span>Live Handshake Console:</span>
+                  <span className="text-emerald-400">CONNECTED TO LONDON EQUINIX LD4</span>
+                </div>
                 {connectionLogs.map((log, i) => (
                   <div key={i}>{log}</div>
                 ))}
@@ -1595,15 +1673,15 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
             )}
           </div>
 
-          {/* Right Info Box: MT5 Direct Bridge Setup */}
+          {/* Right Info Box: MT5 & FxPro Direct Bridge Setup */}
           <div className="space-y-6">
             <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-white/10 space-y-4">
               <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                MQL5 Automated Bridge
+                FxPro MQL5 Live Bridge
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Once logged in, the Expert Advisor communicates over ultra-low latency WebSocket directly to your broker cluster.
+                When connected, your trades are executed directly on FxPro liquidity pools with sub-millisecond execution times and ultra-low spread routing.
               </p>
               <div className="space-y-2 text-xs text-slate-400">
                 <div className="p-2.5 rounded-lg bg-slate-950/60 border border-white/5 flex justify-between">
@@ -1612,13 +1690,32 @@ export const WalletAndMT5Terminal: React.FC<WalletAndMT5TerminalProps> = ({
                 </div>
                 <div className="p-2.5 rounded-lg bg-slate-950/60 border border-white/5 flex justify-between">
                   <span>Cluster Latency:</span>
-                  <strong className="text-emerald-400 font-mono">{mt5Profile.serverPingMs}ms</strong>
+                  <strong className="text-emerald-400 font-mono">{mt5Profile.serverPingMs}ms (LD4)</strong>
+                </div>
+                <div className="p-2.5 rounded-lg bg-slate-950/60 border border-white/5 flex justify-between">
+                  <span>Account Number:</span>
+                  <strong className="text-amber-400 font-mono">{mt5Profile.accountNumber || 'Not Linked'}</strong>
                 </div>
                 <div className="p-2.5 rounded-lg bg-slate-950/60 border border-white/5 flex justify-between">
                   <span>Auto-Trading:</span>
                   <strong className="text-emerald-400 font-mono">{mt5Profile.autoTradingEnabled ? 'ENABLED' : 'DISABLED'}</strong>
                 </div>
               </div>
+            </div>
+
+            {/* FxPro Credentials Step-by-Step Helper */}
+            <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <div className="flex items-center gap-2 text-amber-400 font-bold text-xs font-mono">
+                <HelpCircle className="w-4 h-4" />
+                <span>How to Find FxPro Credentials:</span>
+              </div>
+              <ol className="text-xs text-slate-300 space-y-2 list-decimal list-inside leading-relaxed font-sans">
+                <li>Log in to <strong className="text-white">direct.fxpro.com</strong>.</li>
+                <li>Go to <strong className="text-white">Accounts → Live Accounts</strong>.</li>
+                <li>Note your <strong className="text-amber-300 font-mono">MT5 Account Number</strong> and <strong className="text-amber-300 font-mono">Server</strong> (e.g. <span className="font-mono text-emerald-400">FxPro.com-Real01</span>).</li>
+                <li>Select the preset button above or enter the server address.</li>
+                <li>Click <strong className="text-white">Connect & Authenticate</strong> to sync with algorithmic auto-trader.</li>
+              </ol>
             </div>
           </div>
         </div>
